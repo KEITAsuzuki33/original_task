@@ -45,6 +45,7 @@ server.on('request', function(req, res) {
          req.on('readable', function() {
              data += req.read()||"";
              console.log("read文を実行しました")
+                 session_start()
          })
 
          req.on('end', function() {
@@ -80,8 +81,18 @@ server.on('request', function(req, res) {
              var body = querystring.parse(data);
              var email = body.email
              var password = body.password
-             //データベースの中に一致するものがあるか確認する処理をかく
-             //どんな文字列でも高速に検索できる処理？
+             var sql_statement = 'SELECT FROM users WHERE email = "' + email + '" AND password = "' + password + ''
+             //my_client.query(sql_statement, function(err, rows){
+             //)}
+             var generate_id = function(){
+                 var vol = 8
+                 var types = "abcdefghijklmnopqrstuvwxyz0123456789"
+                 var length = types.length
+                 var id = ""
+                 for(var i=0; i<vol; i++){
+                   id += types[Math.floor(Math.random()*cl)]
+                 }
+
          })
 
     //var session_ids = [{id : 1111}]
@@ -98,7 +109,7 @@ server.on('request', function(req, res) {
    // console.log(session_id_index)
 
     res.setHeader('Content-Type', 'text/plain')
-    res.setHeader('Set-Cookie',<>)
+    //res.setHeader('Set-Cookie',<>)
     var cookie =req.headers.cookie
     console.log(req.headers)
     break
