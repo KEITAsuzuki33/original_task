@@ -1,9 +1,9 @@
 var db_host = '127.0.0.1';
 var db_user = 'root';
-var db_pw = '';
+var db_pw   = '';
 var db_name = 'test';
 
-var mysql = require('mysql');
+var mysql         = require('mysql');
 var mysql_options = {
    host: db_host,
    user: db_user,
@@ -13,10 +13,10 @@ var mysql_options = {
 var my_client = mysql.createConnection(mysql_options);
 my_client.connect();
 
-var fs = require("fs")
-var http = require('http');
-var server = http.createServer();
-var settings = require('./settings');
+var fs          = require("fs")
+var http        = require('http');
+var server      = http.createServer();
+var settings    = require('./settings');
 var msg;
 var querystring = require('querystring')
 server.on('request', function(req, res) {
@@ -28,10 +28,10 @@ server.on('request', function(req, res) {
         case '/register/done':
 
             var data = ''
-            req.on('readable', function() {
-            data += req.read()||"";
-            console.log("read文を実行しました")
-        })
+                req.on('readable', function() {
+                data += req.read()||"";
+                console.log("read文を実行しました")
+            })
 
         req.on('end', function() {
             var body          = querystring.parse(data);
@@ -55,46 +55,53 @@ server.on('request', function(req, res) {
        var display = fs.readFile("./views/login.html","utf-8", doRead)
     break;
 
-    case '/time_line':
+    case '/login/done':
+    console.log("ログイン中です")
         var data = ''
-        req.on('readabl', function(){
+        req.on('readable', function(){
             data += req.read()||"";
+                            console.log("read文を実行しました")
         })
         req.on('end', function() {
             var body          = querystring.parse(data);
             var email         = body.email
             var password      = body.password
-            var sql_statement = 'SELECT FROM users WHERE email = "' + email + '" AND password = "' + password + ''
-              console.log(sql_statement)
+            var sql_statement = 'SELECT * FROM user WHERE email = "' + email + '" AND password = "' + password + '"'
             my_client.query(sql_statement, function(err, rows){
-              //データベースに一致する値があれば
-                if (rows != null) {
-                    function generate_id(){
-                        var vol    = 8
-                        var words  = "abcdefghijklmnopqrstuvwxyz0123456789!#$%&*+-"
-                        var length = words.length
-                        var id     = ""
-                        for(var i=0; i<vol; i++){
-                            id += words[Math.floor(Math.random()*length)]
-                        } 
-                        return id
- 
-                        var sessionid = {}
-                        sessionid[id] = "true"
+                if (rows != 0) {
+                    var vol    = 8
+                    var words  = "abcdefghijklmnopqrstuvwxyz0123456789!#$%&*+-"
+                    var length = words.length
+                    var id     = ""
+                    for(var i=0; i<vol; i++){
+                        id += words[Math.floor(Math.random()*length)]
+                    }
 
-                        res.setHeader('Set-Cookie',['cookieProp=cookieValue'])
-                    } 
+                    var sessionid = {}
+                    var key = 
+                    sessionid[id] = "true"
+                    console.log(sessionid)
+                    console.log(id)
+                    res.setHeader("Content-Type", "text/plain")
+                    res.setHeader('Set-Cookie',Object.keys(sessionid))
+                    console.log(Object.keys(sessionid):)
+                    //console.log(req.headers.cookie)
+                    res.setHeader("Location", "http://127.0.0.1:1337/time_line")
+                    res.statusCode = 302
+                    res.end()
                 } else{
-                          res.setHeader("Location", "http://127.0.0.1:1337/register")
-                          res.statusCode = 302
-                      }
+                    res.setHeader("Location", "http://127.0.0.1:1337/register")
+                    res.statusCode = 302
+                    res.end()
                   }
-                res.end()
             })
         })
-         
 
-    console.log(req.headers)
+    break
+
+
+    case '/time_line':
+        var display = fs.readFile("./views/time_line.html","utf-8", doRead)
     break
 
     case '/user_list':
