@@ -13,20 +13,6 @@ var mysql_options = {
 var my_client = mysql.createConnection(mysql_options);
 my_client.connect();
 
-var sql = 'select * from user';
-
-my_client.query(sql, function (err, rows, fields) {
-    if (err) {
-        console.log('can not connect');
-        console.log(err);
-         return;
-   }
-    for (var i in rows) {
-      console.log(rows[i]);
-   }
-});
-
-
 var fs = require("fs")
 var http = require('http');
 var server = http.createServer();
@@ -34,34 +20,32 @@ var settings = require('./settings');
 var msg;
 var querystring = require('querystring')
 server.on('request', function(req, res) {
-  switch (req.url) {
-    case '/register':
-         var display = fs.readFile("./views/register.html","utf-8", doRead)
-    break;
+    switch (req.url) {
+        case '/register':
+            var display = fs.readFile("./views/register.html","utf-8", doRead)
+        break;
 
-    case '/register/done':
+        case '/register/done':
 
-         var data = ''
-         req.on('readable', function() {
-             data += req.read()||"";
-             console.log("read文を実行しました")
-                 session_start()
-         })
+            var data = ''
+            req.on('readable', function() {
+            data += req.read()||"";
+            console.log("read文を実行しました")
+        })
 
-         req.on('end', function() {
-             var body = querystring.parse(data);
-             console.log("リクエストボディをパースしました")
-             var name = body.name
-             var email = body.email
-             var password = body.password
-             var sql_statement = 'insert into user (name, email, password) values ("'+ name +'", '+'"'+ email +'", '+'"'+  password +'")'
+        req.on('end', function() {
+            var body          = querystring.parse(data);
+            var name          = body.name
+            var email         = body.email
+            var password      = body.password
+            var sql_statement = 'insert into user (name, email, password) values ("'+ name +'", '+'"'+ email +'", '+'"'+  password +'")'
 
-         my_client.query(sql_statement, function(err, rows){
-             console.log("クエリ文を実行しています")
-             res.setHeader("Location", "http://127.0.0.1:1337/login")
-             res.statusCode = 302
-             res.end();
-             console.log("一連の処理が終わりました")
+            my_client.query(sql_statement, function(err, rows){
+                console.log("クエリ文を実行しています")
+                res.setHeader("Location", "http://127.0.0.1:1337/login")
+                res.statusCode = 302
+                res.end();
+                console.log("一連の処理が終わりました")
             })
          })
     msg = "アカウント登録完了画面"
@@ -69,48 +53,47 @@ server.on('request', function(req, res) {
 
     case '/login':
        var display = fs.readFile("./views/login.html","utf-8", doRead)
-        // ここにクッキーを生成する処理を書くのでは？
     break;
 
     case '/time_line':
-         var data = ''
-         req.on('readabl', function(){
-             data += req.read()||"";
-         })
-         req.on('end', function() {
-             var body = querystring.parse(data);
-             var email = body.email
-             var password = body.password
-             var sql_statement = 'SELECT FROM users WHERE email = "' + email + '" AND password = "' + password + ''
-             //my_client.query(sql_statement, function(err, rows){
-             //)}
-             var generate_id = function(){
-                 var vol = 8
-                 var types = "abcdefghijklmnopqrstuvwxyz0123456789"
-                 var length = types.length
-                 var id = ""
-                 for(var i=0; i<vol; i++){
-                   id += types[Math.floor(Math.random()*cl)]
-                 }
+        var data = ''
+        req.on('readabl', function(){
+            data += req.read()||"";
+        })
+        req.on('end', function() {
+            var body          = querystring.parse(data);
+            var email         = body.email
+            var password      = body.password
+            var sql_statement = 'SELECT FROM users WHERE email = "' + email + '" AND password = "' + password + ''
+              console.log(sql_statement)
+            my_client.query(sql_statement, function(err, rows){
+              //データベースに一致する値があれば
+                if (rows != null) {
+                    function generate_id(){
+                        var vol    = 8
+                        var words  = "abcdefghijklmnopqrstuvwxyz0123456789!#$%&*+-"
+                        var length = words.length
+                        var id     = ""
+                        for(var i=0; i<vol; i++){
+                            id += words[Math.floor(Math.random()*length)]
+                        } 
+                        return id
+ 
+                        var sessionid = {}
+                        sessionid[id] = "true"
 
-         })
+                        res.setHeader('Set-Cookie',['cookieProp=cookieValue'])
+                    } 
+                } else{
+                          res.setHeader("Location", "http://127.0.0.1:1337/register")
+                          res.statusCode = 302
+                      }
+                  }
+                res.end()
+            })
+        })
+         
 
-    //var session_ids = [{id : 1111}]
-   // var session_id_index = {}
-   // session_Ids.forEach(fuunction(sessionid_hash){
-   //     var key = sessionid.key
-   //     if (session_id_index[key] != null){
-   //         settion_id_index[key].push(sessionid)
-   //     }else{
-   //         var value = [sessionid_hash]
-   //         session_id_index[key] = value
-   //     }
-   // })
-   // console.log(session_id_index)
-
-    res.setHeader('Content-Type', 'text/plain')
-    //res.setHeader('Set-Cookie',<>)
-    var cookie =req.headers.cookie
     console.log(req.headers)
     break
 
