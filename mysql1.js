@@ -78,13 +78,12 @@ server.on('request', function(req, res) {
                     }
 
                     var sessionid = {}
-                    var key = 
                     sessionid[id] = "true"
                     console.log(sessionid)
                     console.log(id)
                     res.setHeader("Content-Type", "text/plain")
                     res.setHeader('Set-Cookie',Object.keys(sessionid))
-                    console.log(Object.keys(sessionid):)
+                    console.log(Object.keys(sessionid))
                     //console.log(req.headers.cookie)
                     res.setHeader("Location", "http://127.0.0.1:1337/time_line")
                     res.statusCode = 302
@@ -102,6 +101,9 @@ server.on('request', function(req, res) {
 
     case '/time_line':
         var display = fs.readFile("./views/time_line.html","utf-8", doRead)
+        var cookie = req.headers.cookie
+      console.log(req.headers)
+
     break
 
     case '/user_list':
