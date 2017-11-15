@@ -137,10 +137,35 @@ ERROR 1075 (42000): Incorrect table definition; there can be only one auto colum
 
 
 
+____________________________________________
+| user  | CREATE TABLE `user` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `name` varchar(30) NOT NULL,
+  `email` varchar(255) NOT NULL,
+  `password` varchar(255) NOT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `email` (`email`)
+) ENGINE=InnoDB AUTO_INCREMENT=45 DEFAULT CHARSET=utf8
 
 
+| tweet | CREATE TABLE `tweet` (
+  `user_id` int(11) DEFAULT NULL,
+  `tweet` varchar(140) DEFAULT NULL,
+  `created_time` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `tweet_id` int(11) NOT NULL AUTO_INCREMENT,
+  PRIMARY KEY (`tweet_id`),
+  KEY `user_id` (`user_id`),
+  CONSTRAINT `tweet_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `user` (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=5 DEFAULT CHARSET=utf8 |
 
-
+| follow | CREATE TABLE `follow` (
+  `follow_user_id` int(11) DEFAULT NULL,
+  `followed_user_id` int(11) DEFAULT NULL,
+  UNIQUE KEY `combination` (`follow_user_id`,`followed_user_id`),
+  KEY `followed_user_id` (`followed_user_id`),
+  CONSTRAINT `follow_ibfk_1` FOREIGN KEY (`follow_user_id`) REFERENCES `user` (`id`),
+  CONSTRAINT `follow_ibfk_2` FOREIGN KEY (`followed_user_id`) REFERENCES `user` (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 |
 
 
 

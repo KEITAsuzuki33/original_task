@@ -13,13 +13,13 @@ var mysql_options = {
 var my_client = mysql.createConnection(mysql_options);
 my_client.connect();
 
+var ejs         = require('ejs')
 var fs          = require("fs")
 var http        = require('http');
 var server      = http.createServer();
 var settings    = require('./settings');
-var msg;
 var querystring = require('querystring')
-var sessionids = {}
+var sessionids  = {}
 
 server.on('request', function(req, res) {
     switch (req.url) {
@@ -53,114 +53,145 @@ server.on('request', function(req, res) {
                     res.end()
                 }
              })
-    msg = "アカウント登録完了画面"
-    break
+        break
 
-    case '/login':
-       var display = fs.readFile("./views/login.html","utf-8", doRead)
-    break;
+        case '/login':
+           var display = fs.readFile("./views/login.html","utf-8", doRead)
+        break;
 
-    case '/login/done':
-        var data = ''
-        req.on('readable', function(){
-            data += req.read()||"";
-        })
-        console.log("ログイン処理中です")
-        req.on('end', function() {
-            var sessionid = ""
-            var body          = querystring.parse(data);
-            var email         = body.email
-            var password      = body.password
-            var sql_statement = 'SELECT * FROM user WHERE email = "' + email + '" AND password = "' + password + '"'
-            my_client.query(sql_statement, function(err, rows){
-                if (rows != 0) {
-                    var vol       = 8
-                    var words     = "abcdefghijklmnopqrstuvwxyz0123456789"
-                    var length    = words.length
-                    for(var i=0; i<vol; i++){
-                        sessionid += words[Math.floor(Math.random()*length)]
+        case '/login/done':
+            var data = ''
+            req.on('readable', function(){
+                data += req.read()||"";
+            })
+
+            req.on('end', function() {
+                var sessionid     = ""
+                var body          = querystring.parse(data);
+                var email         = body.email
+                var password      = body.password
+                var sql_statement = 'SELECT * FROM user WHERE email = "' + email + '" AND password = "' + password + '"'
+                my_client.query(sql_statement, function(err, rows){
+                    if (rows != 0) {
+                        var vol       = 8
+                        var words     = "abcdefghijklmnopqrstuvwxyz0123456789"
+                        var length    = words.length
+                        for(var i=0; i<vol; i++){
+                            sessionid += words[Math.floor(Math.random()*length)]
+                        }
+                        sessionids[sessionid] = "true"
+
+                        res.setHeader("Content-Type", "text/plain")
+                        res.setHeader('Set-Cookie',['sessionid='+ sessionid]+';path=/')
+
+                        res.setHeader("Location", "http://127.0.0.1:1337/time_line")
+                        res.statusCode = 302
+                        res.end()
                     }
-                    sessionids[sessionid] = "true"
-                    console.log(sessionid)
-                    res.setHeader("Content-Type", "text/plain")
-                    res.setHeader('Set-Cookie',['sessionid='+ sessionid]+';path=/')
+                    else {
+                        res.setHeader("Location", "http://127.0.0.1:1337/register")
+                        res.statusCode = 302
+                        res.end()
+                    }
+                })
+            })
 
+        break
+
+
+        case '/time_line':
+        console.log(1)
+        var hello = fs.readFileSync("hello.ejs","utf-8", doRead)
+            console.log(2)
+
+        function doRequest(req, res) {
+            ejs.render(hello, {
+                title:"ほげ",
+                content:"ああああああ",
+            })
+        }
+
+        doRequest()
+            res.writeHead(200, {'Content-Type': 'text/html'});
+            //res.write(hello2);
+            res.end();
+        break
+
+        case '/tweet_post':
+
+            var cookie      = req.headers.cookie
+            var splitCookie = cookie.split(";")
+            var cookieArray = {}
+
+            for (i = 0; i < splitCookie.length; i++) {
+                splitCookie[i] = splitCookie[i].trim()
+                var element = splitCookie[i].split("=")
+                cookieArray[element[0]] = element[1]
+            }
+
+            if (cookieArray.sessionid in sessionids) {
+                var display = fs.readFile("./views/tweet_post.html","utf-8", doRead)
+            }else{
+                res.setHeader("Location", "http://127.0.0.1:1337/login")
+                res.statusCode = 302
+                res.end()
+            }
+        break
+
+        case '/tweet_post/complete':
+
+            var cookie      = req.headers.cookie
+            var splitCookie = cookie.split(";")
+            var cookieArray = {}
+
+            for (i = 0; i < splitCookie.length; i++) {
+                splitCookie[i] = splitCookie[i].trim()
+                var element = splitCookie[i].split("=")
+                cookieArray[element[0]] = element[1]
+            }
+
+            if (cookieArray.sessionid in sessionids) {
+                var data = ''
+                    req.on('readable', function(){
+                    data += req.read()||"";
+                })
+                req.on('end', function(){
+                    console.log(data)
+                    var body  = querystring.parse(data)
+                    var tweet = body.tweet
+                    var sql_statement = 'insert into tweet (tweet) values ("'+tweet+'")'
+
+                    my_client.query(sql_statement, function(err, rows){
                     res.setHeader("Location", "http://127.0.0.1:1337/time_line")
                     res.statusCode = 302
-                    res.end()
-                }
-                else {
-                    res.setHeader("Location", "http://127.0.0.1:1337/register")
-                    res.statusCode = 302
-                    res.end()
-                }
-            })
-        })
+                    res.end();
+                    })
+                })
+            }else{
+                res.setHeader("Location", "http://127.0.0.1:1337/login")
+                res.statusCode = 302
+                res.end()
+            }
 
-    break
+        break
 
+        case '/user_list':
+            var display = fs.readFile("./views/user_list.html","utf-8", doRead)
+        break
 
-    case '/time_line':
-
-            console.log("タイムラインページを表示しました")
-            console.log(req.headers.cookie)
-            var display = fs.readFile("./views/time_line.html","utf-8", doRead)
-            console.log(sessionids)
-            res.setHeader("Location", "http://127.0.0.1:1337/login")
-            res.statusCode = 302
-    break
-
-    case '/tweet_post':
-        console.log(sessionids)
-        var cookie = req.headers.cookie
-        console.log(cookie)
-        var split_cookie = cookie.split(";")
-        console.log(split_cookie)
-        var parced_cookie = ""
-        for (i=0; i<split_cookie.length; i++){
-         var element = split_cookie[i].split("=")
-             if (elem[0].trim() == "value") {
-               parced_cookie = unescape(elem[1]);
-             } else {
-               continue;
-             }
-        }
-        var display = fs.readFile("./views/tweet_post.html","utf-8", doRead)
-    break
-
-    case '/tweet_post/complete':
-        var data = ''
-        req.on('readable', function(){
-            data += req.read()||"";
-        })
-        req.on('end', function(){
-            console.log(data)
-          var body  = querystring.parse(data)
-          var tweet = body.tweet
-          var sql_statement = 'insert into tweet (tweet) values ("'+tweet+'")'
-
-          my_client.query(sql_statement, function(err, rows){
-          res.setHeader("Location", "http://127.0.0.1:1337/time_line")
-          res.statusCode = 302
-          res.end();
-          })
-     })
-    break
-
-    case '/user_list':
-        msg = "ユーザー一覧"
-    break
-
-    default:
-       msg = 'エラー';
-    break;
+        default:
+           msg = 'エラー';
+        break;
   }
 
-  function doRead(err, data) {
-  res.writeHead(200, {'Content-Type': 'text/html'});
-  res.write(data);
-  res.end();
-    }
+      function doRead(err, data) {
+      res.writeHead(200, {'Content-Type': 'text/html'});
+      res.write(data);
+      res.end();
+        }
 })
 
 server.listen(settings.port,settings.host)
+
+//検索に筆禍かrっy等にしる
+//ロボットにんしょう
